@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Login – Frequência de Bolsistas</title>
+
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: #f4f6f8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-box {
+            background: #ffffff;
+            padding: 30px 35px;
+            width: 360px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .login-box h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        label {
+            font-size: 14px;
+            color: #555;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #0057b8;
+            border: none;
+            color: white;
+            font-size: 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #004494;
+        }
+
+        .erro {
+            color: red;
+            font-size: 13px;
+            text-align: center;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-box">
+    <h2>Acesso ao Sistema</h2>
+
+    <label>Email institucional</label>
+    <input type="email" id="email" placeholder="seuemail@uespi.br">
+
+    <label>Senha</label>
+    <input type="password" id="senha" placeholder="Senha geral">
+
+    <button onclick="fazerLogin()">Entrar</button>
+
+    <div class="erro" id="mensagemErro"></div>
+</div>
+
+<script>
+    // CONFIGURAÇÕES
+    const SENHA_GERAL = "teste1204"; // <-- você pode mudar depois
+    const EMAIL_ADMIN = "bolsatrabalho@prex.uespi.br";
+
+    function fazerLogin() {
+        const email = document.getElementById("email").value.trim().toLowerCase();
+        const senha = document.getElementById("senha").value;
+        const erro = document.getElementById("mensagemErro");
+
+        erro.style.display = "none";
+
+        // Verificações básicas
+        if (!email || !senha) {
+            mostrarErro("Preencha email e senha.");
+            return;
+        }
+
+        // Verifica se é email institucional UESPI (qualquer subdomínio)
+        if (!email.endsWith("uespi.br")) {
+            mostrarErro("Use um email institucional da UESPI.");
+            return;
+        }
+
+        // Verifica senha geral
+        if (senha !== SENHA_GERAL) {
+            mostrarErro("Senha incorreta.");
+            return;
+        }
+
+        // Define tipo de usuário
+        let tipoUsuario = "coordenador";
+        if (email === EMAIL_ADMIN) {
+            tipoUsuario = "admin";
+        }
+
+        // Salva dados da sessão
+        sessionStorage.setItem("emailUsuario", email);
+        sessionStorage.setItem("tipoUsuario", tipoUsuario);
+
+        // Redireciona SOMENTE após tudo válido
+        window.location.href = "tabela.html";
+    }
+
+    function mostrarErro(msg) {
+        const erro = document.getElementById("mensagemErro");
+        erro.innerText = msg;
+        erro.style.display = "block";
+    }
+</script>
+
+</body>
+</html>
