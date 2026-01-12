@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Sistema de Frequência de Bolsistas</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+    padding: 20px;
+}
+.container {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+th, td {
+    border: 1px solid #ccc;
+    padding: 6px;
+    text-align: center;
+}
+th {
+    background: #f0f0f0;
+}
+input, select {
+    width: 100%;
+    font-size: 12px;
+}
+button {
+    padding: 6px 12px;
+    margin: 4px;
+    border: none;
+    border-radius: 5px;
+    background: #0057b8;
+    color: #fff;
+    cursor: pointer;
+}
+button:hover {
+    background: #004494;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h2>Sistema de Frequência de Bolsistas</h2>
+
+<button onclick="adicionar()">➕ Adicionar bolsista</button>
+<button onclick="enviar()">📤 Enviar planilha</button>
+
+<table>
+<thead>
+<tr>
+<th>Campus</th>
+<th>Nome</th>
+<th>Matrícula</th>
+<th>Setor</th>
+<th>Email Coordenador</th>
+<th>Vigência Início</th>
+<th>Vigência Fim</th>
+
+<th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th>
+<th>Mai</th><th>Jun</th><th>Jul</th><th>Ago</th>
+<th>Set</th><th>Out</th><th>Nov</th><th>Dez</th>
+
+<th>Justificativa</th>
+<th>Arquivo</th>
+<th>Ações</th>
+</tr>
+</thead>
+
+<tbody id="tbody"></tbody>
+</table>
+
+</div>
+
+<script>
+const URL_APPS = "https://script.google.com/macros/s/AKfycbwwl6i89bMXh8TNd3Kk7iFzZuUcwOdqzLKqZ5geg2r7FIurKOoj102twjhSlXDRpsw7Fw/exec";
+
+let dados = JSON.parse(localStorage.getItem("bolsistas")) || [];
+
+const meses = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+
+function salvar() {
+    localStorage.setItem("bolsistas", JSON.stringify(dados));
+}
+
+function adicionar() {
+    dados.push({
+        campus:"",
+        nome:"",
+        matricula:"",
+        setor:"",
+        coordenador:"",
+        inicio:"",
+        fim:"",
+        meses: Array(12).fill(""),
+        justificativa:"",
+        arquivoBase64:"",
+        arquivoNome:""
+    });
+    render();
+}
+
+function remover(i){
+    if(confirm("Remover bolsista?")){
+        dados.splice(i,1);
+        render();
+    }
+}
+
+function render(){
+    const tbody = document.getElementById("tbody");
+    tbody.innerHTML = "";
+
+    dados.forEach((b,i)=>{
+        let linha = `
+        <tr>
+            <td><input value="${b.campus}" onchange="dados[${i}].campus=this.value;salvar()"></td>
+            <td><input value="${b.nome}" onchange="dados[${i}].nome=this.value;salvar()"></td>
+            <td><input value="${b.matricula}" onchange="dados[${i}].matricula=this.value;salvar()"></td>
+            <td><input value="${b.setor}" onchange="dados[${i}].setor=this.value;salvar()"></td>
+            <td><input value="${b.coordenador}" onchange="dados[${i}].coordenador=this.value;salvar()"></td>
+            <td><input type="date" value="${b.inicio}" onchange="dados[${i}].inicio=this.value;salvar()"></td>
+            <td><input type="date" value="${b.fim}" onchange="dados[${i}].fim=this.value;salvar()"></td>
+        `;
+
+        meses.forEach((m,mi)=>{
+            linha += `
+            <td>
+                <select onchange="dados[${i}].meses[${mi}]=this.value;salvar()">
+                    <option value="" ${b.meses[mi]===""?"selected":""}></option>
+                    <option value="SIM" ${b.meses[mi]==="SIM"?"selected":""}>SIM</option>
+                    <option value="NÃO" ${b.meses[mi]==="NÃO"?"selected":""}>NÃO</option>
+                </select>
+            </td>`;
+        });
+
+        linha += `
+            <td><input value="${b.justificativa}" onchange="dados[${i}].justificativa=this.value;salvar()"></td>
+            <td><input type="file" onchange="upload(event,${i})"></td>
+            <td><button onclick="remover(${i})">🗑</button></td>
+        </tr>`;
+
+        tbody.innerHTML += linha;
+    });
+
+    salvar();
+}
+
+function upload(e,i){
+    const file = e.target.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        dados[i].arquivoBase64 = reader.result.split(",")[1];
+        dados[i].arquivoNome = file.name;
+        salvar();
+    };
+    reader.readAsDataURL(file);
+}
+
+function enviar(){
+    const envio = dados.map(b => ({
+        campus: b.campus,
+        nome: b.nome,
+        matricula: b.matricula,
+        setor: b.setor,
+        coordenador: b.coordenador,
+        vigenciaInicio: b.inicio,
+        vigenciaFim: b.fim,
+
+        jan: b.meses[0],
+        fev: b.meses[1],
+        mar: b.meses[2],
+        abr: b.meses[3],
+        mai: b.meses[4],
+        jun: b.meses[5],
+        jul: b.meses[6],
+        ago: b.meses[7],
+        set: b.meses[8],
+        out: b.meses[9],
+        nov: b.meses[10],
+        dez: b.meses[11],
+
+        justificativa: b.justificativa,
+        arquivoNome: b.arquivoNome,
+        arquivoBase64: b.arquivoBase64
+    }));
+
+    fetch(URL_APPS,{
+        method:"POST",
+        body: JSON.stringify(envio)
+    })
+    .then(r=>r.json())
+    .then(r=>{
+        if(r.status==="ok") alert("Dados enviados com sucesso!");
+        else alert("Erro: "+r.mensagem);
+    })
+    .catch(e=>alert("Erro de conexão"));
+}
+
+render();
+</script>
+</body>
+</html>
